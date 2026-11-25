@@ -245,7 +245,6 @@ app.get('/api/leaderboard', (_req, res) => {
 app.get('/api/leaderboard/stream', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
   res.setHeader('Cache-Control', 'no-cache, no-transform')
-  res.setHeader('Connection', 'keep-alive')
   res.setHeader('X-Accel-Buffering', 'no')
   res.flushHeaders?.()
   res.write('retry: 3000\n\n')
