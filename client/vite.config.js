@@ -13,12 +13,7 @@ export default defineConfig({
       '/humans.txt': API_TARGET,
       '/admin': API_TARGET,
       '/member': API_TARGET,
-      '/greet': API_TARGET,
-      '/page': API_TARGET,
-      '/download': API_TARGET,
-      '/backup': API_TARGET,
-      '/render': API_TARGET,
-      '/uploads': API_TARGET
+      '/legacy-login': API_TARGET
     }
   }
 })

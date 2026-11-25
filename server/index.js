@@ -1,11 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-import multer from 'multer'
-import ejs from 'ejs'
 import fs from 'node:fs'
 import path from 'node:path'
-import { exec } from 'node:child_process'
 import { ROOT, db } from './db.js'
 import { FLAGS, TOTAL_POINTS } from './flags.js'
 import {
@@ -13,15 +10,11 @@ import {
   getPlayer, requirePlayer, leaderboard, playerStats, recordSubmission
 } from './players.js'
 
-// Used by the upload -> template RCE challenge. Intentionally exposed.
-process.env.CTF_FLAG_14 = FLAGS[13].flag
-
 const app = express()
 app.use(cors({ origin: true, credentials: true }))
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use('/uploads', express.static(path.join(ROOT, 'uploads')))
 
 const PORT = Number(process.env.PORT || 7000)
 
@@ -37,14 +30,8 @@ app.get('/humans.txt', (_req, res) => {
   res.type('text/plain').send(fs.readFileSync(path.join(ROOT, 'data/humans.txt'), 'utf8'))
 })
 
-app.get('/backup/db.js.bak', (_req, res) => {
-  res.type('text/plain').send(fs.readFileSync(path.join(ROOT, 'data/backup/db.js.bak'), 'utf8'))
-})
-
 /* ------------------------------------------------------------------ *
- * VULNERABLE SQL SEARCH - error based + union based                   *
- * FLAG 6 leaks through the SQLite error. FLAG 7 lives in secret_flags.*
- * FLAG 15 lives in vault and is revealed by the backup chain.         *
+ * VULNERABLE SQL SEARCH - error based SQLi (flag 06)                   *
  * ------------------------------------------------------------------ */
 
 app.get('/api/search', (req, res) => {
@@ -61,21 +48,6 @@ app.get('/api/search', (req, res) => {
       detail: String(err.message),
       debug_flag: FLAGS[5].flag
     })
-  }
-})
-
-/* ------------------------------------------------------------------ *
- * BOOLEAN BLIND SQLi                                                   *
- * ------------------------------------------------------------------ */
-
-app.get('/api/item', (req, res) => {
-  const id = String(req.query.id ?? '1')
-  const sql = `SELECT id, name, description FROM vuln_items WHERE id = ${id}`
-  try {
-    const rows = db.prepare(sql).all()
-    res.json({ found: rows.length > 0, expression: sql, result: rows[0] ?? null })
-  } catch (err) {
-    res.status(400).json({ error: String(err.message), expression: sql })
   }
 })
 
@@ -134,100 +106,57 @@ app.get('/api/users/:id', (req, res) => {
 })
 
 /* ------------------------------------------------------------------ *
- * STORED XSS - comment body is stored and returned verbatim            *
+ * FLAG 07 - EXPOSED DEBUG ENDPOINT                                     *
  * ------------------------------------------------------------------ */
 
-app.get('/api/comments', (_req, res) => {
-  res.json(db.prepare('SELECT id, author, body FROM comments ORDER BY id').all())
-})
-
-app.post('/api/comments', (req, res) => {
-  const author = String(req.body?.author || 'anonymous').slice(0, 40)
-  const body = String(req.body?.body || '')
-  db.prepare('INSERT INTO comments (author, body) VALUES (?, ?)').run(author, body)
-  res.json({ ok: true })
-})
-
-/* ------------------------------------------------------------------ *
- * REFLECTED XSS - raw HTML reflection                                  *
- * ------------------------------------------------------------------ */
-
-app.get('/greet', (req, res) => {
-  const name = typeof req.query.name === 'string' ? req.query.name : 'guest'
-  res.cookie('xss_flag', FLAGS[9].flag, { httpOnly: false })
-  res.type('html').send(`<!doctype html>
-<html><head><meta charset="utf-8"><title>CRYPTON - Greeting</title></head>
-<body style="background:#050505;color:#e50914;font-family:monospace">
-  <h1>Hello, ${name}</h1>
-  <p><a href="/">Return to CRYPTON</a></p>
-</body></html>`)
-})
-
-/* ------------------------------------------------------------------ *
- * LFI + DOWNLOAD TRAVERSAL                                             *
- * ------------------------------------------------------------------ */
-
-app.get('/page', (req, res) => {
-  const requested = typeof req.query.page === 'string' ? req.query.page : 'about'
-  // INTENTIONALLY VULNERABLE: no path normalisation or allow-list.
-  const file = path.join(ROOT, 'views/pages', requested)
-  try {
-    res.type('text/plain').send(fs.readFileSync(file, 'utf8'))
-  } catch {
-    res.status(404).send('Page not found')
-  }
-})
-
-app.get('/download', (req, res) => {
-  const requested = typeof req.query.file === 'string' ? req.query.file : 'manifesto.txt'
-  // INTENTIONALLY VULNERABLE: user controls the whole relative path.
-  const file = path.join(ROOT, 'data/downloads', requested)
-  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
-    return res.status(404).send('File not found')
-  }
-  res.download(file, path.basename(file))
-})
-
-/* ------------------------------------------------------------------ *
- * COMMAND INJECTION                                                    *
- * ------------------------------------------------------------------ */
-
-app.get('/api/ping', (req, res) => {
-  const host = typeof req.query.host === 'string' ? req.query.host : '127.0.0.1'
-  const script = path.join(ROOT, 'scripts/ping.sh')
-  // INTENTIONALLY VULNERABLE: unquoted user input handed to a shell.
-  exec(`sh ${script} ${host}`, (err, stdout, stderr) => {
-    if (err && !stdout) return res.status(500).json({ error: String(err.message) })
-    res.json({ host, output: stdout, stderr: stderr || null })
+app.get('/api/debug', (_req, res) => {
+  res.json({
+    service: 'CRYPTON',
+    mode: 'debug',
+    flag: FLAGS[6].flag,
+    config: {
+      environment: 'production',
+      firewall: 'disabled',
+      inputValidation: 'none'
+    }
   })
 })
 
 /* ------------------------------------------------------------------ *
- * UNRESTRICTED UPLOAD -> EJS TEMPLATE RENDER                           *
+ * FLAG 08 - FLAG LEAKED IN A RESPONSE HEADER                            *
  * ------------------------------------------------------------------ */
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, path.join(ROOT, 'uploads')),
-  filename: (_req, file, cb) => cb(null, path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_'))
-})
-const upload = multer({ storage, limits: { fileSize: 512 * 1024 } })
-
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
-  res.json({ ok: true, filename: req.file.filename, viewUrl: `/render?view=${encodeURIComponent(req.file.filename)}` })
+app.get('/api/health', (_req, res) => {
+  res.setHeader('Access-Control-Expose-Headers', 'X-CTF-Flag')
+  res.setHeader('X-CTF-Flag', FLAGS[7].flag)
+  res.json({ ok: true, service: 'CRYPTON', flags: FLAGS.length })
 })
 
-app.get('/render', async (req, res) => {
-  const view = typeof req.query.view === 'string' ? req.query.view : ''
-  if (!view) return res.status(400).send('Missing view parameter')
-  const file = path.join(ROOT, 'uploads', path.basename(view))
-  try {
-    // INTENTIONALLY VULNERABLE: uploaded templates are executed server-side.
-    const html = await ejs.renderFile(file, {})
-    res.type('html').send(html)
-  } catch (err) {
-    res.status(400).send(String(err.message))
+/* ------------------------------------------------------------------ *
+ * FLAG 10 - LEGACY LOGIN WITH DEFAULT CREDENTIALS                       *
+ * ------------------------------------------------------------------ */
+
+app.get('/legacy-login', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><title>CRYPTON - Legacy Login</title></head>
+<body style="background:#020512;color:#edf3ff;font-family:monospace;padding:40px">
+  <h1>LEGACY PORTAL</h1>
+  <form method="POST" action="/legacy-login">
+    <p>USERNAME <input name="username" autocomplete="off"></p>
+    <p>PASSWORD <input name="password" type="password" autocomplete="off"></p>
+    <button type="submit">LOGIN</button>
+  </form>
+  <p><a href="/">Return to CRYPTON</a></p>
+</body></html>`)
+})
+
+app.post('/legacy-login', (req, res) => {
+  const username = String(req.body?.username ?? '')
+  const password = String(req.body?.password ?? '')
+  if (username === 'admin' && password === 'admin') {
+    return res.json({ ok: true, flag: FLAGS[9].flag, message: 'Legacy administrative access granted.' })
   }
+  res.json({ ok: false, message: 'Access denied. Invalid credentials.' })
 })
 
 /* ------------------------------------------------------------------ *
@@ -363,10 +292,6 @@ app.get('/api/scoreboard', (_req, res) => {
     totalSolves: rows.reduce((sum, row) => sum + row.solved, 0),
     leader: rows[0] || null
   })
-})
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'CRYPTON', flags: FLAGS.length })
 })
 
 /* ------------------------------------------------------------------ *

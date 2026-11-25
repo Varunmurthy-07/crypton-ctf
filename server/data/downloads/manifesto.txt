@@ -1,9 +1,0 @@
-CRYPTON - INTERNAL MANIFESTO
-
-1. Never trust user input.
-2. Always parameterize queries.
-3. Never render user HTML.
-4. Never concatenate shell commands.
-5. Never expose backups.
-
-(We broke all of these on purpose. It is a CTF.)

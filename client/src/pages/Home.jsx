@@ -2,9 +2,11 @@ import { useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { HINTS, TOTAL_POINTS } from '../data/hints.js'
+import { HINTS, TOTAL_POINTS, CATEGORIES } from '../data/hints.js'
 
 gsap.registerPlugin(ScrollTrigger)
+
+const SPA_ROUTES = ['/', '/lab', '/submit', '/login', '/leaderboard']
 
 function Window({ title, children, className = '' }) {
   return (
@@ -93,7 +95,7 @@ export default function Home() {
             CRYPTON <span className="sep">/</span> IEEE TECHNICAL EVENT <span className="sep">/</span> DEPT OF MCA <span className="sep">/</span> RAMAIAH INSTITUTE OF TECHNOLOGY
           </div>
           <p className="hero-tagline">
-            A LIVE BREACH SIMULATOR. 15 FLAGS ARE BURIED IN THIS STACK.<br />
+            A LIVE BREACH SIMULATOR. {HINTS.length} FLAGS ARE BURIED IN THIS STACK.<br />
             EVERY HINT IS DIRECT. EVERY ENDPOINT IS BROKEN.
           </p>
           <div className="hero-actions">
@@ -125,8 +127,8 @@ export default function Home() {
       </section>
 
       <div className="stats-row">
-        <div className="stat-card"><span className="stat-number" data-value="15">0</span><span className="stat-label">FLAGS_BURIED</span></div>
-        <div className="stat-card"><span className="stat-number" data-value="8">0</span><span className="stat-label">ATTACK_CLASSES</span></div>
+        <div className="stat-card"><span className="stat-number" data-value={HINTS.length}>0</span><span className="stat-label">FLAGS_BURIED</span></div>
+        <div className="stat-card"><span className="stat-number" data-value={CATEGORIES.length - 1}>0</span><span className="stat-label">ATTACK_CLASSES</span></div>
         <div className="stat-card"><span className="stat-number" data-value={TOTAL_POINTS}>0</span><span className="stat-label">TOTAL_POINTS</span></div>
         <div className="stat-card"><span className="stat-number" data-value="0">0</span><span className="stat-label">FLAGS_CAPTURED</span></div>
       </div>
@@ -135,7 +137,7 @@ export default function Home() {
         <div className="section-kicker">$ cat /mission/brief.txt</div>
         <h2>THE HINTS ARE NOT A MYSTERY.</h2>
         <p>
-          Fifteen flags. Fifteen <strong>direct hints</strong>. Each row below names the endpoint,
+          {HINTS.length} flags. {HINTS.length} <strong>direct hints</strong>. Each row below names the endpoint,
           the technique and the exact payload — your job is to understand <em>why</em> it works,
           then paste the captured string into the submission terminal.
         </p>
@@ -150,12 +152,12 @@ export default function Home() {
         <div className="files-heading reveal">
           <div className="section-kicker">$ ls -la /flags</div>
           <h2>FLAG DIRECTORY</h2>
-          <p>15 entries. No guesswork. Scroll to decrypt each hint.</p>
+          <p>{HINTS.length} entries. No guesswork. Scroll to decrypt each hint.</p>
         </div>
 
         <div className="file-list">
           {HINTS.map((item) => {
-            const isInternal = item.href.startsWith('/')
+            const isInternal = SPA_ROUTES.includes(item.href.split('#')[0])
             const content = (
               <>
                 <span className="file-perm">-rwxr-xr-x</span>
@@ -181,7 +183,7 @@ export default function Home() {
       <section className="final-cta reveal">
         <Window title="mission_complete.sh" className="cta-window">
           <div className="section-kicker">$ ./finalize</div>
-          <h2>ALL 15 CAPTURED?</h2>
+          <h2>ALL {HINTS.length} CAPTURED?</h2>
           <p>Feed every flag to the capture terminal and watch the scoreboard climb.</p>
           <div className="hero-actions">
             <Link to="/submit" className="btn btn-primary">./submit_flags</Link>

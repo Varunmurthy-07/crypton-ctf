@@ -8,4 +8,4 @@
   Stack: React, Express, SQLite
 
 /* FLAGS */
-  There are 15. All hints are on the home page.
+  There are 10. All hints are on the home page.

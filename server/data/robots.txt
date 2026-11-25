@@ -1,9 +1,7 @@
 # CRYPTON / Ramaiah Institute of Technology
 User-agent: *
 Disallow: /admin
-Disallow: /vault
-Disallow: /backup
-Disallow: /data
 Disallow: /api/users
+Disallow: /api/debug
 
 # RITCTF{ROBOTS_TXT_INFORMATION_DISCLOSURE}

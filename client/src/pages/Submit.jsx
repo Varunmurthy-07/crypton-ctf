@@ -29,7 +29,7 @@ export default function Submit() {
   }
 
   const solvedIds = stats?.solvedIds || []
-  const pct = Math.round((solvedIds.length / 15) * 100)
+  const pct = Math.round((solvedIds.length / HINTS.length) * 100)
 
   return (
     <div className="submit-page" ref={root}>
@@ -72,7 +72,7 @@ export default function Submit() {
               </div>
             )}
             <div className="progress-meta">
-              <span>{solvedIds.length} / 15 CAPTURED</span>
+              <span>{solvedIds.length} / {HINTS.length} CAPTURED</span>
               <span>{stats?.points ?? 0} / {TOTAL_POINTS} PTS</span>
             </div>
             <div className="progress-track"><div className="progress-bar" style={{ width: `${pct}%` }} /></div>

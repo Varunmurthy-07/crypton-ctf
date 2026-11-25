@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { API, TOTAL_POINTS } from '../data/hints.js'
+import { API, HINTS, TOTAL_POINTS } from '../data/hints.js'
 import { useScrollReveal } from '../hooks/useScrollReveal.js'
 
 export default function Leaderboard() {
@@ -80,7 +80,7 @@ export default function Leaderboard() {
                 <div className={`board-row ${row.rank <= 3 ? 'top' : ''}`} key={row.id} data-reveal-row>
                   <span className="board-rank">#{String(row.rank).padStart(2, '0')}</span>
                   <span className="board-user">{row.username}</span>
-                  <span>{row.solved} / 15</span>
+                  <span>{row.solved} / {HINTS.length}</span>
                   <span className="board-points">{row.points} / {totalPoints}</span>
                 </div>
               ))}

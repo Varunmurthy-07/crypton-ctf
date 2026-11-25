@@ -1,6 +1,0 @@
-ABOUT CRYPTON
-
-A deliberately vulnerable web application built for CRYPTON, the IEEE technical event
-hosted by the Department of MCA, Ramaiah Institute of Technology.
-
-Fifteen flags are hidden across the application. Every hint is on the home page.

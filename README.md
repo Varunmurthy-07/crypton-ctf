@@ -11,7 +11,7 @@ and **Express + node:sqlite** on the back end.
 ## Quick start
 
 ```bash
-cd Abhyuday_10/crypton/shadow-protocol
+cd ~/crypton
 npm run install:all     # one-time: installs root, server and client deps
 npm run dev             # starts Express (:7000) and Vite (:5173)
 ```
@@ -26,7 +26,7 @@ npm run build
 npm --prefix server start   # http://localhost:7000
 ```
 
-Verify that all 15 flags are actually reachable:
+Verify that all 10 flags are actually reachable:
 
 ```bash
 npm --prefix server run verify
@@ -66,8 +66,8 @@ the page falls back to polling `/api/leaderboard` every three seconds.
 
 ## Home page and animation
 
-The theme is a phosphor-green terminal (**CRYPTON**) with a BIOS boot sequence, window
-chrome, amber warning telemetry, hex readouts and a scrolling flag directory.
+The theme is a futuristic cyberpunk terminal in deep midnight navy / near-black with electric cyan,
+neon blue and violet-purple gradients. Neon green is reserved for interactive and success states.
 
 **GSAP ScrollTrigger** is used across the whole site, not just the home page:
 
@@ -76,16 +76,17 @@ chrome, amber warning telemetry, hex readouts and a scrolling flag directory.
 - Lab, Submit, Login/Register and Leaderboard: shared `useScrollReveal` hook animates headers,
   terminal windows and table rows as they enter the viewport.
 
-Each of the **15 flags has a direct hint** on the home page — it names the endpoint and the exact
-payload. The client bundle contains **hints only**; real flag values live in `server/flags.js`.
+Each of the **10 flags has a direct hint** on the home page — it names the endpoint and the exact
+payload. The client bundle contains **hints only** (except flag 09, which is intentionally shipped
+in `client/public/assets/config.js`). Real flag values live in `server/flags.js`.
 
 ---
 
 ## Flag format
 
 Every flag is `RITCTF{TECHNICAL_PHRASE}` — the body names the vulnerability class, for example
-`RITCTF{SQL_AUTHENTICATION_BYPASS}` or `RITCTF{UNION_BASED_SQL_INJECTION}`. No plain numbers or
-leetspeak.
+`RITCTF{SQL_AUTHENTICATION_BYPASS}` or `RITCTF{DEBUG_ENDPOINT_INFORMATION_DISCLOSURE}`. No plain
+numbers or leetspeak.
 
 ## Flag map
 
@@ -97,38 +98,34 @@ leetspeak.
 | 04 | Cookie Forgery | Access control | `/member` | Login as `varun` / `hunter2`, change `role` cookie to `admin`, open `/member` |
 | 05 | Profile Hopping | IDOR | `/api/users/2` | Change the user id from 1 to 2 and read `private_note` |
 | 06 | Error Based SQLi | SQLi | SQLite error response | Search `'` — `debug_flag` leaks in the error JSON |
-| 07 | Union Based SQLi | SQLi | `secret_flags` table | Search `' UNION SELECT id, flag, flag FROM secret_flags -- ` |
-| 08 | Boolean Blind SQLi | SQLi | `secret_flags` id 8 | `/api/item?id=1 AND substr((SELECT flag FROM secret_flags WHERE id=8),N,1)='X'` |
-| 09 | Stored XSS | XSS | Guestbook | Post `<img src=x onerror="alert(window.__SECRET__)">` |
-| 10 | Reflected XSS | XSS | `/greet` + cookie | `/greet?name=<img src=x onerror="alert(document.cookie)">` |
-| 11 | Local File Inclusion | File | `server/data/secrets/` | `/page?page=../../data/secrets/lfi_flag.txt` |
-| 12 | Download Traversal | File | `server/data/secrets/` | `/download?file=../secrets/download_flag.txt` |
-| 13 | Command Injection | RCE | `server/data/secrets/` | `/api/ping?host=127.0.0.1; cat data/secrets/cmd_flag.txt` |
-| 14 | Upload + Template RCE | RCE | env var | Upload `shell.ejs` with `<%= process.env.CTF_FLAG_14 %>`, open `/render?view=shell.ejs` |
-| 15 | The Final Chain | Chaining | `vault` table | Read `/backup/db.js.bak`, then `' UNION SELECT id, note, note FROM vault -- ` |
+| 07 | Debug Endpoint | Misconfiguration | `/api/debug` | Open the URL; the JSON response has a `flag` field |
+| 08 | Header Leak | Information disclosure | `/api/health` | DevTools → Network → response header `X-CTF-Flag` |
+| 09 | Client Secret | Client-side exposure | `/assets/config.js` | Open the static file and read `CLIENT_SECRET` |
+| 10 | Legacy Login | Default credentials | `/legacy-login` | Sign in with `admin` / `admin` |
 
-Total available points: **1675**.
+Total available points: **675**.
 
 ---
 
 ## Structure
 
 ```
-shadow-protocol/
+crypton/
 ├── client/                  React + Vite + GSAP
 │   ├── index.html           flag 01 (HTML comment)
+│   ├── public/assets/config.js  flag 09 (client secret)
 │   └── src/
-│       ├── data/hints.js    direct hints (never contains flags)
+│       ├── data/hints.js    direct hints (no flags except the shipped config above)
 │       ├── hooks/useScrollReveal.js  shared ScrollTrigger animations
 │       ├── contexts/PlayerContext.jsx
 │       └── pages/           Home, Lab, Auth, Submit, Leaderboard
 ├── server/
-│   ├── flags.js             ALL 15 REAL FLAGS (server only)
+│   ├── flags.js             ALL 10 REAL FLAGS (server only)
 │   ├── db.js                SQLite schema + seed data
 │   ├── players.js           player auth, sessions, scoring, leaderboard
 │   ├── index.js             vulnerable Express endpoints + checker
 │   ├── verify.mjs           automated solver / regression check
-│   └── data/                robots.txt, backup, secret text files
+│   └── data/                robots.txt, humans.txt
 └── README.md
 ```
 
@@ -192,8 +189,6 @@ server {
         proxy_cache off;
         proxy_read_timeout 3600s;
     }
-
-    client_max_body_size 10m;   # upload challenge
 }
 ```
 
@@ -218,11 +213,11 @@ Same-origin hosting (Options A/B) is strongly recommended.
 ### What to send participants
 
 - **URL:** the HTTPS link above.
-- **Flow:** open the home page → use the 15 direct hints → **register/login** at `/login` →
+- **Flow:** open the home page → use the 10 direct hints → **register/login** at `/login` →
   submit flags at `/submit` → watch `/leaderboard` for live ranks.
 - **Flag format:** `RITCTF{TECHNICAL_PHRASE}`.
-- **Reset between batches:** delete `server/ctf.db`, clear `server/uploads/`, then restart the
-  server. That removes all accounts, submissions and solves.
+- **Reset between batches:** delete `server/ctf.db`, then restart the server. That removes all
+  accounts, submissions and solves.
 
 > This app is intentionally vulnerable. Run it on an isolated lab VM, never on a host with real
 > user data, and do not expose the raw port 7000 publicly — keep it behind HTTPS/proxy or a tunnel.
@@ -232,11 +227,9 @@ Same-origin hosting (Options A/B) is strongly recommended.
 ## Notes for organisers
 
 - Change flag strings in `server/flags.js`, then update their hardcoded copies in
-  `client/index.html` (flag 01), `client/src/main.jsx` (flag 09), `server/data/robots.txt`
-  (flag 02) and the three files in `server/data/secrets/` (flags 11–13).
+  `client/index.html` (flag 01), `server/data/robots.txt` (flag 02) and
+  `client/public/assets/config.js` (flag 09). Flags 07, 08 and 10 only exist in `server/flags.js`.
 - Delete `server/ctf.db` to reseed the database with new flag values.
-- Uploaded files land in `server/uploads/` and are intentionally executable as EJS templates.
-- The ping tool runs a fake ping script (`server/scripts/ping.sh`) — no real network traffic.
 - `/api/login` is intentionally vulnerable for flags 03/04; do not "fix" it. Player accounts
   live under `/api/player/*` and are not part of the challenges.
 - Set `COOKIE_SECURE=true` behind HTTPS so session cookies are marked `Secure`.

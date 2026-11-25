@@ -10,7 +10,7 @@ import { API } from './data/hints.js'
 
 const BOOT_LINES = [
   '[  OK  ] mounting /dev/crypton',
-  '[  OK  ] loading exploit modules ......... 15',
+  '[  OK  ] loading exploit modules ......... 10',
   '[  OK  ] starting sqlite engine',
   '[ WARN ] input validation: DISABLED',
   '[  OK  ] firewall: OFFLINE (organiser override)',
@@ -72,7 +72,7 @@ function Shell({ children }) {
       <footer className="footer">
         <span>CRYPTON · IEEE TECHNICAL EVENT · DEPT OF MCA · RAMAIAH INSTITUTE OF TECHNOLOGY</span>
         <span className="footer-credit">Made by SINCHANA SHETTY &amp; VARUN MURTHY</span>
-        <span>15 FLAGS · 0 FIREWALLS · ROOT ACCESS PENDING</span>
+        <span>10 FLAGS · 0 FIREWALLS · ROOT ACCESS PENDING</span>
       </footer>
     </div>
   )

