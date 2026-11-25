@@ -1,6 +1,3 @@
-# Separate pre-existing repository (has its own .git history)
-ctf-project/
-
 # Dependencies
 node_modules/
 venv/
