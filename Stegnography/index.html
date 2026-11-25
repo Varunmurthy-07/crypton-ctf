@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABHYUDAY - Interactive Cinematic Poster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .poster-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: url('1st.png') center/cover no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .poster-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
+        }
+
+        .hotspot {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .hotspot::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #8B0000;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #8B0000, 0 0 40px rgba(139, 0, 0, 0.5), 0 0 60px rgba(139, 0, 0, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .hotspot::after {
+            content: '🎬';
+            position: absolute;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            bottom: -30px;
+        }
+
+        .hotspot:hover::before {
+            transform: scale(1.5);
+            box-shadow: 0 0 40px #FF0000, 0 0 80px rgba(139, 0, 0, 0.7);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        .hotspot-1 { top: 10%; left: 10%; }
+        .hotspot-2 { top: 10%; right: 10%; }
+        .hotspot-3 { top: 30%; left: 5%; }
+        .hotspot-4 { top: 30%; right: 5%; }
+        .hotspot-5 { top: 50%; left: 3%; }
+        .hotspot-6 { top: 50%; right: 3%; }
+        .hotspot-7 { bottom: 25%; left: 8%; }
+        .hotspot-8 { bottom: 25%; right: 8%; }
+        .hotspot-9 { bottom: 10%; left: 15%; }
+        .hotspot-10 { bottom: 10%; right: 15%; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
+            border: 2px solid rgba(139, 0, 0);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(139, 0, 0, 0.5);
+            animation: slideUp 0.5s ease;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #8B0000, #FF0000, #8B0000);
+            border-radius: 16px;
+            z-index: -1;
+            animation: borderGlow 3s infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .dialogue {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 20px;
+            font-style: italic;
+            text-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
+        }
+
+        .movie-title {
+            font-size: 1.5rem;
+            color: #8B0000;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            color: #8B0000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #FF0000;
+            transform: rotate(90deg);
+        }
+
+        .phrase-overlay {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            bottom: -50px;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(139, 0, 0, 0.3);
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="poster-container">
+        <div class="hotspot hotspot-1">
+            <span class="phrase-overlay">"May the Force be with you."</span>
+        </div>
+        <div class="hotspot hotspot-2">
+            <span class="phrase-overlay">"I'll be back."</span>
+        </div>
+        <div class="hotspot hotspot-3">
+            <span class="phrase-overlay">"Why so serious?"</span>
+        </div>
+        <div class="hotspot hotspot-4">
+            <span class="phrase-overlay">"I'm the king of the world!"</span>
+        </div>
+        <div class="hotspot hotspot-5">
+            <span class="phrase-overlay">"Say hello to my little friend!"</span>
+        </div>
+        <div class="hotspot hotspot-6">
+            <span class="phrase-overlay">"You can't handle the truth!"</span>
+        </div>
+        <div class="hotspot hotspot-7">
+            <span class="phrase-overlay">"Houston, we have a problem."</span>
+        </div>
+        <div class="hotspot hotspot-8">
+            <span class="phrase-overlay">"Life is like a box of chocolates."</span>
+        </div>
+        <div class="hotspot hotspot-9">
+            <span class="phrase-overlay">"My precious."</span>
+        </div>
+        <div class="hotspot hotspot-10">
+            <span class="phrase-overlay">"To infinity and beyond!"</span>
+        </div>
+        
+        <div class="hint">Click the glowing hotspots to discover iconic movie dialogues</div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <span class="close-btn" id="closeBtn">&times;</span>
+            <p class="dialogue" id="dialogueText"></p>
+            <p class="movie-title" id="movieTitle"></p>
+        </div>
+    </div>
+
+    <script>
+        const dialogues = [
+            { text: "May the Force be with you.", movie: "Star Wars" },
+            { text: "I'll be back.", movie: "The Terminator" },
+            { text: "Why so serious?", movie: "The Dark Knight" },
+            { text: "I'm the king of the world!", movie: "Titanic" },
+            { text: "Say hello to my little friend!", movie: "Scarface" },
+            { text: "You can't handle the truth!", movie: "A Few Good Men" },
+            { text: "Houston, we have a problem.", movie: "Apollo 13" },
+            { text: "Life is like a box of chocolates.", movie: "Forrest Gump" },
+            { text: "My precious.", movie: "The Lord of the Rings" },
+            { text: "To infinity and beyond!", movie: "Toy Story" }
+        ];
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        let shuffledDialogues = shuffleArray(dialogues);
+        let currentIndex = 0;
+
+        const hotspots = document.querySelectorAll('.hotspot');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const dialogueText = document.getElementById('dialogueText');
+        const movieTitle = document.getElementById('movieTitle');
+        const closeBtn = document.getElementById('closeBtn');
+
+        hotspots.forEach(hotspot => {
+            hotspot.addEventListener('click', () => {
+                if (currentIndex >= shuffledDialogues.length) {
+                    shuffledDialogues = shuffleArray(dialogues);
+                    currentIndex = 0;
+                }
+                
+                const dialogue = shuffledDialogues[currentIndex];
+                dialogueText.textContent = `"${dialogue.text}"`;
+                movieTitle.textContent = `— ${dialogue.movie}`;
+                modalOverlay.classList.add('active');
+                currentIndex++;
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                modalOverlay.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

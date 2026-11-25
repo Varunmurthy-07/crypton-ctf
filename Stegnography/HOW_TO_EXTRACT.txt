@@ -1,0 +1,40 @@
+
+================================================================================
+                    HOW TO EXTRACT HIDDEN PHRASES FROM IMAGE
+================================================================================
+
+IMAGE FILE: abhyuday_with_text.png
+
+METHOD 1: Use any Text Editor (EASIEST!)
+----------------------------------------
+1. Open "abhyuday_with_text.png" in any text editor:
+   - Windows: Notepad, Notepad++, WordPad
+   - macOS: TextEdit (use "Plain Text" mode), VS Code
+   - Linux: Gedit, Vim, Nano, VS Code
+
+2. Scroll to the VERY END of the file!
+3. You'll see:
+   --- HIDDEN MESSAGE START ---
+   ... all 10 movie phrases ...
+   --- HIDDEN MESSAGE END ---
+
+
+METHOD 2: Use Command Line / Terminal
+-------------------------------------
+For Linux/macOS:
+   tail -50 abhyuday_with_text.png
+
+For Windows (PowerShell):
+   Get-Content abhyuday_with_text.png -Tail 50
+
+
+METHOD 3: Use Our Simple Python Script
+--------------------------------------
+If participants have Python installed, they can run:
+python3 extract_phrases.py
+
+(The extract_phrases.py script is provided with the image!)
+
+
+That's it! Super simple!
+================================================================================

@@ -1,0 +1,11 @@
+/* TEAM */
+  Event: IEEE Technical Event
+  Department: MCA
+  Institution: Ramaiah Institute of Technology
+
+/* SITE */
+  Codename: CRYPTON
+  Stack: React, Express, SQLite
+
+/* FLAGS */
+  There are 15. All hints are on the home page.

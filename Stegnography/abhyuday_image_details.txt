@@ -1,0 +1,36 @@
+
+================================================================================
+                          ABHYUDAY IMAGE DETAILS REPORT
+================================================================================
+
+IMAGE METADATA
+==============
+Filename:          abhyuday_with_text.png
+Format:            PNG
+Color Mode:        RGB
+Dimensions:        1536 x 1024
+Width:             1536 pixels
+Height:            1024 pixels
+Has Palette:       No
+Additional Info:   {}
+
+
+EMBEDDED HIDDEN PHRASES
+========================
+ABHYUDAY - Iconic Movie Phrases
+================================
+
+1. "May the Force be with you." - Star Wars
+2. "I'll be back." - The Terminator
+3. "Why so serious?" - The Dark Knight
+4. "I'm the king of the world!" - Titanic
+5. "Say hello to my little friend!" - Scarface
+6. "You can't handle the truth!" - A Few Good Men
+7. "Houston, we have a problem." - Apollo 13
+8. "Life is like a box of chocolates." - Forrest Gump
+9. "My precious." - The Lord of the Rings
+10. "To infinity and beyond!" - Toy Story
+
+================================================================================
+                              END OF REPORT
+================================================================================
